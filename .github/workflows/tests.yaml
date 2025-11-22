@@ -22,4 +22,4 @@ jobs:
         run: uv sync --no-default-groups --group test
 
       - name: ✅ Run unit tests
-        run: uv run pytest -vvv
+        run: uv run pytest -v
