@@ -1,4 +1,4 @@
-from python_template import main
+from py_wait_until import main
 
 
 def test__main_can_be_called():

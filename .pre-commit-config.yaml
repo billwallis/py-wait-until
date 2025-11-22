@@ -12,16 +12,6 @@ repos:
     hooks:
       - id: identity
 
-  # Stolen from: https://github.com/elementary-data/elementary/blob/ef5043811a72009126391a3f0c8a18f72ae00b18/.pre-commit-config.yaml
-  - repo: local
-    hooks:
-      - id: no-commit
-        name: Check for NO_COMMIT marker
-        entry: bash -c "git diff --cached -U0 | (! grep NO_COMMIT)"
-        language: system
-        pass_filenames: false
-        always_run: true
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -38,7 +28,6 @@ repos:
         name: Check for large files
       - id: check-json
         name: Check JSON files are valid and parseable
-        exclude: "devcontainer.json"
       - id: check-yaml
         name: Check YAML files are valid and parseable
       - id: check-toml
