@@ -88,6 +88,24 @@ def test__spinner_shows_in_tty_mode(
     assert QAPLA in capsys.readouterr().out
 
 
+def test__spinner_shows_in_tty_mode_with_custom_message(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """
+    A custom message can be shown with the spinner.
+    """
+
+    monkeypatch.setattr("sys.stdout.isatty", lambda: True)
+    message = "Custom waiting message"
+
+    assert main(["-m", message, *echo(QAPLA)]) == 0
+    assert message in capsys.readouterr().out
+
+    assert main(["--message", message, *echo(QAPLA)]) == 0
+    assert message in capsys.readouterr().out
+
+
 def test__stderr_output_is_captured(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
