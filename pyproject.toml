@@ -13,6 +13,9 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = []
 
+[project.scripts]
+py-wait-until = "py_wait_until.main:main"
+
 [dependency-groups]
 dev = [
     "coverage-badge>=1.1.2",
@@ -43,7 +46,7 @@ update.shell = """
     pre-commit autoupdate
     pre-commit install --install-hooks
 """
-test = "uv run pytest -v"
+test = "uv run pytest -vvv"
 
 [tool.poe.tasks.lint]
 control.expr = "sys.platform"
