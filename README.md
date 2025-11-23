@@ -36,6 +36,16 @@ py-wait-until python -c "import time; time.sleep(2)"
 
 The return code of the original command is preserved. Specifying no command will exit with code 1 and show the help message.
 
+### Custom loading message
+
+You can specify a custom loading message using the `--message` (or `-m`) option:
+
+```shell
+uvx py-wait-until --message "Processing..." python -c "import time; time.sleep(2)"
+```
+
+This option _must_ be specified before the command to run
+
 ## Contributing
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and then install the dependencies:

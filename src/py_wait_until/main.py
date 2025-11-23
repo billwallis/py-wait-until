@@ -32,7 +32,7 @@ def _spinner() -> Generator[str]:
         yield chars[index % len(chars)]
 
 
-def _wait_for_process(cmd: list[str]) -> int:
+def _wait_for_process(cmd: list[str], message: str) -> int:
     """
     Execute a command and display a waiting message until it completes.
     """
@@ -53,7 +53,7 @@ def _wait_for_process(cmd: list[str]) -> int:
         if is_tty:
             _write_line(
                 sys.stdout,
-                f"\rWaiting for process to finish... {next(spin)}",
+                f"\r{message} {next(spin)}",
             )
         time.sleep(WAIT_DURATION_SECONDS)
 
@@ -83,13 +83,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         nargs=argparse.REMAINDER,
         help="Command(s) to execute",
     )
+    parser.add_argument(
+        "-m",
+        "--message",
+        type=str,
+        required=False,
+        default="Waiting for process to finish...",
+        help="Message to display while waiting",
+    )
 
     args = parser.parse_args(argv)
     if not args.command:
         parser.print_help()
         return 1
 
-    return _wait_for_process(args.command)
+    return _wait_for_process(
+        cmd=args.command,
+        message=args.message,
+    )
 
 
 if __name__ == "__main__":

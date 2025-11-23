@@ -6,7 +6,7 @@ build-backend = "uv_build"
 
 [project]
 name = "py-wait-until"
-version = "0.0.2"
+version = "0.0.3"
 description = "Print a loading spinner while another command is running."
 authors = [{name = "billwallis"}]
 readme = "README.md"
