@@ -15,9 +15,17 @@
 
 # Wait Until
 
-Wait until a command returns a successful exit code.
+Print a loading spinner while another process is running.
 
-## Quick start
+## Usage
+
+Simply prepend `py-wait-until` to any command:
+
+```shell
+py-wait-until python -c "import time; time.sleep(2)"
+```
+
+## Contributing
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and then install the dependencies:
 
