@@ -15,15 +15,26 @@
 
 # Wait Until
 
-Print a loading spinner while another process is running.
+Print a loading spinner while another command is running.
 
 ## Usage
 
-Simply prepend `py-wait-until` to any command:
+`py-wait-until` is a CLI tool which runs a command and displays a loading spinner while the command is executing.
+
+The easiest way to use `py-wait-until` is via [`uvx`](https://docs.astral.sh/uv/guides/tools/), for example:
 
 ```shell
+uvx py-wait-until python -c "import time; time.sleep(2)"
+```
+
+Alternatively, install from PyPI and run without `uvx`:
+
+```shell
+pip install py-wait-until
 py-wait-until python -c "import time; time.sleep(2)"
 ```
+
+The return code of the original command is preserved. Specifying no command will exit with code 1 and show the help message.
 
 ## Contributing
 
