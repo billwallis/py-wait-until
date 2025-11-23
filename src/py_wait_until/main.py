@@ -72,16 +72,16 @@ def _wait_for_process(cmd: list[str]) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """
-    Wait until a command completes.
+    Print a loading spinner while another process is running.
     """
 
     parser = argparse.ArgumentParser(
-        description="Wait until a command completes.",
+        description="Print a loading spinner while another command is running.",
     )
     parser.add_argument(
         "command",
         nargs=argparse.REMAINDER,
-        help="Command and arguments to execute",
+        help="Command(s) to execute",
     )
 
     args = parser.parse_args(argv)
