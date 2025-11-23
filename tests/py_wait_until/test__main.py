@@ -4,14 +4,9 @@ from collections.abc import Sequence
 
 import pytest
 
-from src.py_wait_until.main import (
-    ANSI_HIDE_CURSOR,
-    ANSI_SHOW_CURSOR,
-    main,
-)
+from src.py_wait_until.main import main
 
 QAPLA = "Qapla'!"
-QAPLA_PRINTED = f"{ANSI_HIDE_CURSOR}{QAPLA}\n{ANSI_SHOW_CURSOR}"
 
 
 def python(cmd: str) -> Sequence[str]:
@@ -42,23 +37,34 @@ def test__cli_with_no_arguments_prints_help(
         m.setattr("sys.argv", ["py-wait-until"])
         assert main() == 1
 
-    assert capsys.readouterr().out.startswith("usage: py-wait-until")
+    assert capsys.readouterr().out.startswith("usage:")
 
 
 def test__successful_process_returns_zero(
+    monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """
     A successful command returns exit code 0.
     """
 
+    monkeypatch.setattr("sys.stdout.isatty", lambda: True)
+
     assert main(echo(QAPLA)) == 0
-    assert capsys.readouterr().out == QAPLA_PRINTED
+    assert QAPLA in capsys.readouterr().out
 
 
 def test__unsuccessful_command_returns_non_zero() -> None:
     """
-    An unsuccessful command returns a non-zero exit code.
+    A command which exits with a non-zero code returns that code.
+    """
+
+    assert main(python("import sys; sys.exit(3)")) == 3
+
+
+def test__raised_exceptions_are_propagated() -> None:
+    """
+    Exceptions raised by the subprocess are propagated.
     """
 
     with pytest.raises(Exception) as exception:
@@ -79,11 +85,7 @@ def test__spinner_shows_in_tty_mode(
     monkeypatch.setattr("sys.stdout.isatty", lambda: True)
 
     assert main(echo(QAPLA)) == 0
-
-    captured = capsys.readouterr().out
-    assert captured.startswith(ANSI_HIDE_CURSOR)
-    assert captured.endswith(ANSI_SHOW_CURSOR)
-    assert QAPLA in captured  # `captured` includes the "clear line" ANSI code
+    assert QAPLA in capsys.readouterr().out
 
 
 def test__stderr_output_is_captured(

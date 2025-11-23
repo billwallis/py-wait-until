@@ -1,5 +1,4 @@
 import argparse
-import contextlib
 import subprocess
 import sys
 import time
@@ -21,17 +20,6 @@ def _write_line(stream: TextIO, message: str) -> None:
     stream.flush()
 
 
-@contextlib.contextmanager
-def _hide_cursor() -> Generator[None]:
-    """
-    Context manager to hide the terminal cursor.
-    """
-
-    _write_line(sys.stdout, ANSI_HIDE_CURSOR)
-    yield
-    _write_line(sys.stdout, ANSI_SHOW_CURSOR)
-
-
 def _spinner() -> Generator[str]:
     """
     Return an infinite generator that yields spinner characters.
@@ -50,7 +38,8 @@ def _wait_for_process(cmd: list[str]) -> int:
     """
 
     # Only show spinner if stdout is a TTY (interactive terminal)
-    is_tty = sys.stdout.isatty()
+    if is_tty := sys.stdout.isatty():
+        _write_line(sys.stdout, ANSI_HIDE_CURSOR)
 
     process = subprocess.Popen(  # noqa: S603
         cmd,
@@ -70,6 +59,7 @@ def _wait_for_process(cmd: list[str]) -> int:
 
     if is_tty:
         _write_line(sys.stdout, f"\r{ANSI_CLEAR_LINE}")
+        _write_line(sys.stdout, ANSI_SHOW_CURSOR)
 
     stdout, stderr = process.communicate()
     if stdout:
@@ -99,8 +89,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.print_help()
         return 1
 
-    with _hide_cursor():
-        return _wait_for_process(args.command)
+    return _wait_for_process(args.command)
 
 
 if __name__ == "__main__":
