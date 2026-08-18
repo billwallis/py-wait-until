@@ -1,4 +1,5 @@
 import argparse
+import random
 import subprocess
 import sys
 import time
@@ -9,6 +10,26 @@ WAIT_DURATION_SECONDS = 0.1
 ANSI_CLEAR_LINE = "\033[2K"
 ANSI_HIDE_CURSOR = "\033[?25l"
 ANSI_SHOW_CURSOR = "\033[?25h"
+LOADING_SPINNERS = (
+    # # Basic/simple option
+    ["|", "/", "-", "\\"],
+    # # Inspired by Docker and dbt Fusion's loading indicator
+    [
+        *["⠄", "⠆", "⠖", "⠶", "⠲", "⠰"],
+        *["⠠", "⠤", "⠦", "⠶", "⠖", "⠒"],
+        *["⠐", "⠰", "⠴", "⠶", "⠦", "⠆"],
+        *["⠂", "⠒", "⠲", "⠶", "⠴", "⠤"],
+    ],
+    # https://stackoverflow.com/a/12305221/8213085
+    # https://raw.githubusercontent.com/sindresorhus/cli-spinners/master/spinners.json
+    [
+        *["⠁", "⠂", "⠄", "⡀", "⡈", "⡐", "⡠", "⣀"],
+        *["⣁", "⣂", "⣄", "⣌", "⣔", "⣤", "⣥", "⣦"],
+        *["⣮", "⣶", "⣷", "⣿", "⡿", "⠿", "⢟", "⠟"],
+        *["⡛", "⠛", "⠫", "⢋", "⠋", "⠍", "⡉", "⠉"],
+        *["⠑", "⠡", "⢁"],
+    ],
+)
 
 
 def _write_line(stream: TextIO, message: str) -> None:
@@ -20,12 +41,11 @@ def _write_line(stream: TextIO, message: str) -> None:
     stream.flush()
 
 
-def _spinner() -> Generator[str]:
+def _spinner(chars: Sequence[str]) -> Generator[str]:
     """
     Return an infinite generator that yields spinner characters.
     """
 
-    chars = ["|", "/", "-", "\\"]
     index = -1
     while True:
         index += 1
@@ -48,7 +68,7 @@ def _wait_for_process(cmd: list[str], message: str) -> int:
         text=True,
     )
 
-    spin = _spinner()
+    spin = _spinner(random.choice(LOADING_SPINNERS))  # noqa: S311
     while process.poll() is None:
         if is_tty:
             _write_line(
