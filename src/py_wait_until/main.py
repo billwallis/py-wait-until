@@ -1,4 +1,5 @@
 import argparse
+import enum
 import random
 import subprocess
 import sys
@@ -10,26 +11,34 @@ WAIT_DURATION_SECONDS = 0.1
 ANSI_CLEAR_LINE = "\033[2K"
 ANSI_HIDE_CURSOR = "\033[?25l"
 ANSI_SHOW_CURSOR = "\033[?25h"
-LOADING_SPINNERS = (
-    # # Basic/simple option
-    ["|", "/", "-", "\\"],
-    # # Inspired by Docker and dbt Fusion's loading indicator
-    [
-        *["⠄", "⠆", "⠖", "⠶", "⠲", "⠰"],
-        *["⠠", "⠤", "⠦", "⠶", "⠖", "⠒"],
-        *["⠐", "⠰", "⠴", "⠶", "⠦", "⠆"],
-        *["⠂", "⠒", "⠲", "⠶", "⠴", "⠤"],
-    ],
-    # https://stackoverflow.com/a/12305221/8213085
-    # https://raw.githubusercontent.com/sindresorhus/cli-spinners/master/spinners.json
-    [
-        *["⠁", "⠂", "⠄", "⡀", "⡈", "⡐", "⡠", "⣀"],
-        *["⣁", "⣂", "⣄", "⣌", "⣔", "⣤", "⣥", "⣦"],
-        *["⣮", "⣶", "⣷", "⣿", "⡿", "⠿", "⢟", "⠟"],
-        *["⡛", "⠛", "⠫", "⢋", "⠋", "⠍", "⡉", "⠉"],
-        *["⠑", "⠡", "⢁"],
-    ],
-)
+
+
+class Spinner(enum.StrEnum):
+    LINE = "line"
+    DOTS = "dots"
+    SAND = "sand"
+
+    def chars(self) -> Sequence[str]:
+        return {
+            # Basic/simple option
+            self.LINE: ["|", "/", "-", "\\"],
+            # Inspired by Docker and dbt Fusion's loading indicator
+            self.DOTS: [
+                *["⠄", "⠆", "⠖", "⠶", "⠲", "⠰"],
+                *["⠠", "⠤", "⠦", "⠶", "⠖", "⠒"],
+                *["⠐", "⠰", "⠴", "⠶", "⠦", "⠆"],
+                *["⠂", "⠒", "⠲", "⠶", "⠴", "⠤"],
+            ],
+            # https://stackoverflow.com/a/12305221/8213085
+            # https://raw.githubusercontent.com/sindresorhus/cli-spinners/master/spinners.json
+            self.SAND: [
+                *["⠁", "⠂", "⠄", "⡀", "⡈", "⡐", "⡠", "⣀"],
+                *["⣁", "⣂", "⣄", "⣌", "⣔", "⣤", "⣥", "⣦"],
+                *["⣮", "⣶", "⣷", "⣿", "⡿", "⠿", "⢟", "⠟"],
+                *["⡛", "⠛", "⠫", "⢋", "⠋", "⠍", "⡉", "⠉"],
+                *["⠑", "⠡", "⢁"],
+            ],
+        }[self]
 
 
 def _write_line(stream: TextIO, message: str) -> None:
@@ -52,7 +61,11 @@ def _spinner(chars: Sequence[str]) -> Generator[str]:
         yield chars[index % len(chars)]
 
 
-def _wait_for_process(cmd: list[str], message: str) -> int:
+def _wait_for_process(
+    cmd: list[str],
+    message: str,
+    spinner: Spinner,
+) -> int:
     """
     Execute a command and display a waiting message until it completes.
     """
@@ -68,7 +81,7 @@ def _wait_for_process(cmd: list[str], message: str) -> int:
         text=True,
     )
 
-    spin = _spinner(random.choice(LOADING_SPINNERS))  # noqa: S311
+    spin = _spinner(spinner.chars())
     while process.poll() is None:
         if is_tty:
             _write_line(
@@ -111,6 +124,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         default="Waiting for process to finish...",
         help="Message to display while waiting",
     )
+    spinners = ", ".join([f"'{s}'" for s in Spinner])
+    parser.add_argument(
+        "--spinner",
+        type=Spinner,
+        required=False,
+        help=f"The spinner to display ({spinners}). Defaults to a randomly chosen one",
+        default=random.choice([s for s in Spinner]),  # noqa: S311
+    )
 
     args = parser.parse_args(argv)
     if not args.command:
@@ -120,6 +141,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     return _wait_for_process(
         cmd=args.command,
         message=args.message,
+        spinner=args.spinner,
     )
 
 
