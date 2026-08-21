@@ -73,6 +73,40 @@ def hide_cursor(is_tty: bool) -> Generator[None]:
         _write_line(sys.stdout, ANSI_SHOW_CURSOR)
 
 
+def _wait_for_process(
+    cmd: list[str],
+    message: str,
+    spinner: Spinner,
+    is_tty: bool,
+):
+    process = subprocess.Popen(  # noqa: S603
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    spin = _spinner(spinner.chars())
+    while process.poll() is None:
+        if is_tty:
+            _write_line(
+                sys.stdout,
+                f"\r{message} {next(spin)}",
+            )
+        time.sleep(WAIT_DURATION_SECONDS)
+
+    if is_tty:
+        _write_line(sys.stdout, f"\r{ANSI_CLEAR_LINE}")
+
+    stdout, stderr = process.communicate()
+    if stdout:
+        _write_line(sys.stdout, stdout)
+    if stderr:
+        _write_line(sys.stderr, stderr)
+
+    return process.returncode
+
+
 def _wait_until(
     cmd: list[str],
     message: str,
@@ -82,37 +116,20 @@ def _wait_until(
     Execute a command and display a waiting message until it completes.
     """
 
+    # TODO: If _not_ a TTY, then just run the process; else run `_wait_for_process`?
     # Only show spinner if stdout is a TTY (interactive terminal)
     is_tty = sys.stdout.isatty()
     with hide_cursor(is_tty=is_tty):
-        process = subprocess.Popen(  # noqa: S603
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-
-        spin = _spinner(spinner.chars())
-        with contextlib.suppress(Exception):
-            while process.poll() is None:
-                if is_tty:
-                    _write_line(
-                        sys.stdout,
-                        f"\r{message} {next(spin)}",
-                    )
-                time.sleep(WAIT_DURATION_SECONDS)
-
-        if is_tty:
-            _write_line(sys.stdout, f"\r{ANSI_CLEAR_LINE}")
-            _write_line(sys.stdout, ANSI_SHOW_CURSOR)
-
-        stdout, stderr = process.communicate()
-        if stdout:
-            _write_line(sys.stdout, stdout)
-        if stderr:
-            _write_line(sys.stderr, stderr)
-
-        return process.returncode
+        try:
+            return _wait_for_process(
+                cmd=cmd,
+                message=message,
+                spinner=spinner,
+                is_tty=is_tty,
+            )
+        # We purposefully want to catch _everything_, including e.g. `KeyboardInterrupt`
+        except BaseException:  # noqa
+            return 1
 
 
 def main(argv: Sequence[str] | None = None) -> int:
