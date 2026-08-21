@@ -62,16 +62,13 @@ def test__unsuccessful_command_returns_non_zero() -> None:
     assert main(python("import sys; sys.exit(3)")) == 3
 
 
-def test__raised_exceptions_are_propagated() -> None:
+def test__raised_exceptions_have_non_zero_exit_codes() -> None:
     """
-    Exceptions raised by the subprocess are propagated.
+    Exceptions raised by the subprocess are converted to non-zero exit
+    codes.
     """
 
-    with pytest.raises(Exception) as exception:
-        # This should raise a `FileNotFoundError` on macOS
-        main(["something", "broken"])
-
-    assert exception.value != 0
+    assert main(["something", "broken"]) != 0
 
 
 def test__spinner_shows_in_tty_mode(

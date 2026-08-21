@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import enum
 import random
 import subprocess
@@ -61,19 +62,23 @@ def _spinner(chars: Sequence[str]) -> Generator[str]:
         yield chars[index % len(chars)]
 
 
+@contextlib.contextmanager
+def hide_cursor(is_tty: bool) -> Generator[None]:
+    if is_tty:
+        _write_line(sys.stdout, ANSI_HIDE_CURSOR)
+
+    yield
+
+    if is_tty:
+        _write_line(sys.stdout, ANSI_SHOW_CURSOR)
+
+
 def _wait_for_process(
     cmd: list[str],
     message: str,
     spinner: Spinner,
+    is_tty: bool,
 ) -> int:
-    """
-    Execute a command and display a waiting message until it completes.
-    """
-
-    # Only show spinner if stdout is a TTY (interactive terminal)
-    if is_tty := sys.stdout.isatty():
-        _write_line(sys.stdout, ANSI_HIDE_CURSOR)
-
     process = subprocess.Popen(  # noqa: S603
         cmd,
         stdout=subprocess.PIPE,
@@ -92,7 +97,6 @@ def _wait_for_process(
 
     if is_tty:
         _write_line(sys.stdout, f"\r{ANSI_CLEAR_LINE}")
-        _write_line(sys.stdout, ANSI_SHOW_CURSOR)
 
     stdout, stderr = process.communicate()
     if stdout:
@@ -101,6 +105,32 @@ def _wait_for_process(
         _write_line(sys.stderr, stderr)
 
     return process.returncode
+
+
+def _wait_until(
+    cmd: list[str],
+    message: str,
+    spinner: Spinner,
+) -> int:
+    """
+    Execute a command and display a waiting message until it completes.
+    """
+
+    # TODO: If _not_ a TTY, then just run the process; else run `_wait_for_process`?
+    # Only show spinner if stdout is a TTY (interactive terminal)
+    is_tty = sys.stdout.isatty()
+    with hide_cursor(is_tty=is_tty):
+        try:
+            return _wait_for_process(
+                cmd=cmd,
+                message=message,
+                spinner=spinner,
+                is_tty=is_tty,
+            )
+        # We purposefully want to catch _everything_, including e.g. `KeyboardInterrupt`
+        except BaseException as err:
+            _write_line(sys.stderr, str(err))
+            return 1
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -138,7 +168,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.print_help()
         return 1
 
-    return _wait_for_process(
+    return _wait_until(
         cmd=args.command,
         message=args.message,
         spinner=args.spinner,
