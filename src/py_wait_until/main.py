@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import enum
 import random
 import subprocess
@@ -61,7 +62,18 @@ def _spinner(chars: Sequence[str]) -> Generator[str]:
         yield chars[index % len(chars)]
 
 
-def _wait_for_process(
+@contextlib.contextmanager
+def hide_cursor(is_tty: bool) -> Generator[None]:
+    if is_tty:
+        _write_line(sys.stdout, ANSI_HIDE_CURSOR)
+
+    yield
+
+    if is_tty:
+        _write_line(sys.stdout, ANSI_SHOW_CURSOR)
+
+
+def _wait_until(
     cmd: list[str],
     message: str,
     spinner: Spinner,
@@ -71,36 +83,36 @@ def _wait_for_process(
     """
 
     # Only show spinner if stdout is a TTY (interactive terminal)
-    if is_tty := sys.stdout.isatty():
-        _write_line(sys.stdout, ANSI_HIDE_CURSOR)
+    is_tty = sys.stdout.isatty()
+    with hide_cursor(is_tty=is_tty):
+        process = subprocess.Popen(  # noqa: S603
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
 
-    process = subprocess.Popen(  # noqa: S603
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
+        spin = _spinner(spinner.chars())
+        with contextlib.suppress(Exception):
+            while process.poll() is None:
+                if is_tty:
+                    _write_line(
+                        sys.stdout,
+                        f"\r{message} {next(spin)}",
+                    )
+                time.sleep(WAIT_DURATION_SECONDS)
 
-    spin = _spinner(spinner.chars())
-    while process.poll() is None:
         if is_tty:
-            _write_line(
-                sys.stdout,
-                f"\r{message} {next(spin)}",
-            )
-        time.sleep(WAIT_DURATION_SECONDS)
+            _write_line(sys.stdout, f"\r{ANSI_CLEAR_LINE}")
+            _write_line(sys.stdout, ANSI_SHOW_CURSOR)
 
-    if is_tty:
-        _write_line(sys.stdout, f"\r{ANSI_CLEAR_LINE}")
-        _write_line(sys.stdout, ANSI_SHOW_CURSOR)
+        stdout, stderr = process.communicate()
+        if stdout:
+            _write_line(sys.stdout, stdout)
+        if stderr:
+            _write_line(sys.stderr, stderr)
 
-    stdout, stderr = process.communicate()
-    if stdout:
-        _write_line(sys.stdout, stdout)
-    if stderr:
-        _write_line(sys.stderr, stderr)
-
-    return process.returncode
+        return process.returncode
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -138,7 +150,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.print_help()
         return 1
 
-    return _wait_for_process(
+    return _wait_until(
         cmd=args.command,
         message=args.message,
         spinner=args.spinner,
