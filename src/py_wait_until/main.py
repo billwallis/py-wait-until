@@ -78,7 +78,7 @@ def _wait_for_process(
     message: str,
     spinner: Spinner,
     is_tty: bool,
-):
+) -> int:
     process = subprocess.Popen(  # noqa: S603
         cmd,
         stdout=subprocess.PIPE,
@@ -128,7 +128,8 @@ def _wait_until(
                 is_tty=is_tty,
             )
         # We purposefully want to catch _everything_, including e.g. `KeyboardInterrupt`
-        except BaseException:  # noqa
+        except BaseException as err:
+            _write_line(sys.stderr, str(err))
             return 1
 
 
