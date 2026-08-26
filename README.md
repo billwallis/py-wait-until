@@ -7,6 +7,7 @@
 
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/billwallis/py-wait-until/main.svg)](https://results.pre-commit.ci/latest/github/billwallis/py-wait-until/main)
 [![GitHub last commit](https://img.shields.io/github/last-commit/billwallis/py-wait-until)](https://shields.io/badges/git-hub-last-commit)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/py-wait-until)](https://shields.io/badges/py-pi-downloads)
 
 </span>
 
