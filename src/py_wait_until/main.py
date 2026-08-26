@@ -18,17 +18,37 @@ class Spinner(enum.StrEnum):
     LINE = "line"
     DOTS = "dots"
     SAND = "sand"
+    CLIMB = "climb"
+    EIGHT_WIDTH_2 = "eight-2"
+    EIGHT_WIDTH_3 = "eight-3"
+    EIGHT_WIDTH_4 = "eight-4"
 
     def chars(self) -> Sequence[str]:
         return {
             # Basic/simple option
             self.LINE: ["|", "/", "-", "\\"],
+            # https://en.wikipedia.org/wiki/Braille_ASCII#Braille_ASCII_values
             # Inspired by Docker and dbt Fusion's loading indicator
             self.DOTS: [
                 *["⠄", "⠆", "⠖", "⠶", "⠲", "⠰"],
                 *["⠠", "⠤", "⠦", "⠶", "⠖", "⠒"],
                 *["⠐", "⠰", "⠴", "⠶", "⠦", "⠆"],
                 *["⠂", "⠒", "⠲", "⠶", "⠴", "⠤"],
+            ],
+            self.CLIMB: [
+                *["⠄", "⠤", "⠴", "⠶", "⠷", "⠿"],
+                *["⠾", "⠶", "⠦", "⠤", "⠠", " "],
+            ],
+            self.EIGHT_WIDTH_2: [
+                *["⠤", "⠰", "⠒", "⠃"],
+                *["⠉", "⠘", "⠒", "⠆"],
+            ],
+            self.EIGHT_WIDTH_3: [
+                *["⠦", "⠴", "⠲", "⠓", "⠋", "⠙", "⠚", "⠖"],
+            ],
+            self.EIGHT_WIDTH_4: [
+                *["⠛", "⠏", "⠭", "⠼"],
+                *["⠶", "⠧", "⠭", "⠹"],
             ],
             # https://stackoverflow.com/a/12305221/8213085
             # https://raw.githubusercontent.com/sindresorhus/cli-spinners/master/spinners.json

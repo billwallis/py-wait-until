@@ -53,3 +53,13 @@ Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and then i
 ```shell
 uvx --from poethepoet poe install
 ```
+
+### Choose a spinner
+
+There are a selection of spinner animations available which can be specified with the `--spinner` argument; check the CLI help for the latest set of options:
+
+```shell
+py-wait-until --help
+```
+
+By default, a spinner will be chosen randomly.
